@@ -59,10 +59,7 @@ class LinkedInAutomationService {
 
     } catch (error) {
       console.error('LinkedIn automation error:', error);
-      
-      // Fallback to email-based submission
-      return await this.fallbackEmailSubmission(submissionData, certificateBuffer);
-    } finally {
+          } finally {
       if (this.browser) {
         await this.browser.close();
       }
@@ -165,81 +162,6 @@ Death certificate attached. Please process this removal request.
       id: caseNumberMatch ? caseNumberMatch[1] : `AUTO_${Date.now()}`,
       message: confirmationText,
       timestamp: new Date().toISOString()
-    };
-  }
-
-  async fallbackEmailSubmission(data, certificateBuffer) {
-    // If automation fails, send structured email to LinkedIn support
-    const nodemailer = await import('nodemailer');
-    
-    const transporter = nodemailer.default.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.SMTP_USER,
-      to: 'help@linkedin.com',
-      cc: data.contactEmail,
-      subject: `Deceased Member Account Removal Request - ${data.deceasedName}`,
-      html: `
-        <h2>Deceased Member Account Removal Request</h2>
-        
-        <p>Dear LinkedIn Support Team,</p>
-        
-        <p>I am requesting the removal of a deceased person's LinkedIn profile in accordance with your deceased member policy.</p>
-        
-        <h3>Deceased Member Information:</h3>
-        <ul>
-          <li><strong>Name:</strong> ${data.deceasedName}</li>
-          <li><strong>LinkedIn Profile:</strong> <a href="${data.linkedinUrl}">${data.linkedinUrl}</a></li>
-          <li><strong>Email Address:</strong> ${data.deceasedEmail || 'Not available'}</li>
-          <li><strong>Date of Death:</strong> ${data.dateOfDeath || 'See death certificate'}</li>
-        </ul>
-        
-        <h3>Requestor Information:</h3>
-        <ul>
-          <li><strong>Contact Email:</strong> ${data.contactEmail}</li>
-          <li><strong>Relationship:</strong> ${data.relationship.replace('-', ' ')}</li>
-          <li><strong>Digital Signature:</strong> ${data.digitalSignature}</li>
-        </ul>
-        
-        <h3>Documentation:</h3>
-        <p>Death certificate is attached to this email as required by LinkedIn's deceased member policy.</p>
-        
-        ${data.additionalInfo ? `<h3>Additional Information:</h3><p>${data.additionalInfo}</p>` : ''}
-        
-        <p>Please process this request and confirm the account removal. If you need any additional information, please contact me at ${data.contactEmail}.</p>
-        
-        <p>Thank you for your assistance during this difficult time.</p>
-        
-        <p>Sincerely,<br>${data.digitalSignature}</p>
-        
-        <hr>
-        <p><small>This request was submitted through the Forgotten digital legacy management service.</small></p>
-      `,
-      attachments: [
-        {
-          filename: data.file.originalname,
-          content: certificateBuffer,
-          contentType: data.file.mimetype,
-        },
-      ],
-    };
-
-    await transporter.sendMail(mailOptions);
-
-    return {
-      success: true,
-      method: 'email_fallback',
-      confirmationId: `EMAIL_${Date.now()}`,
-      message: 'Request sent directly to LinkedIn support via email',
-      estimatedProcessingTime: '7-14 business days'
     };
   }
 
