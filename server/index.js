@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { createTransport } from 'nodemailer';
+import nodemailer from 'nodemailer';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -55,7 +55,7 @@ const upload = multer({
 });
 
 // Configure nodemailer
-const transporter = createTransport({
+const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: parseInt(process.env.SMTP_PORT),
   secure: false,

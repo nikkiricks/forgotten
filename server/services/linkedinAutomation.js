@@ -170,9 +170,9 @@ Death certificate attached. Please process this removal request.
 
   async fallbackEmailSubmission(data, certificateBuffer) {
     // If automation fails, send structured email to LinkedIn support
-    const { createTransport } = await import('nodemailer');
+    const nodemailer = await import('nodemailer');
     
-    const transporter = createTransport({
+    const transporter = nodemailer.default.createTransport({
       host: 'smtp.gmail.com',
       port: 587,
       secure: false,

@@ -1,8 +1,8 @@
-import { createTransport } from 'nodemailer';
+import nodemailer from 'nodemailer';
 
 class NotificationService {
   constructor() {
-    this.transporter = createTransport({
+    this.transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT),
       secure: false,
