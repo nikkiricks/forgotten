@@ -5,6 +5,8 @@ const UploadForm = () => {
   const [file, setFile] = useState<File | null>(null);
   const [contactEmail, setContactEmail] = useState('');
   const [deceasedName, setDeceasedName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [linkedinUrl, setLinkedinUrl] = useState('');
   const [relationship, setRelationship] = useState('');
   const [deathCertAttached, setDeathCertAttached] = useState(false);
@@ -61,6 +63,8 @@ const UploadForm = () => {
       file &&
       contactEmail.trim() &&
       deceasedName.trim() &&
+      firstName.trim() &&
+      lastName.trim() &&
       linkedinUrl.trim() &&
       relationship &&
       deathCertAttached &&
@@ -80,6 +84,8 @@ const UploadForm = () => {
       formData.append('certificate', file);
       formData.append('contactEmail', contactEmail);
       formData.append('deceasedName', deceasedName);
+      formData.append('firstName', firstName);
+      formData.append('lastName', lastName);
       formData.append('linkedinUrl', linkedinUrl);
       formData.append('relationship', relationship);
       formData.append('digitalSignature', digitalSignature);
@@ -117,6 +123,8 @@ const UploadForm = () => {
     setFile(null);
     setContactEmail('');
     setDeceasedName('');
+    setFirstName('');
+    setLastName('');
     setLinkedinUrl('');
     setRelationship('');
     setDeathCertAttached(false);
@@ -192,6 +200,36 @@ const UploadForm = () => {
             <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
               Required Information
             </h3>
+
+            <div>
+              <label htmlFor="first-name" className="block text-sm font-medium text-gray-700 mb-2">
+                Your First Name *
+              </label>
+              <input
+                type="text"
+                id="first-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+                placeholder="First Name"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="last-name" className="block text-sm font-medium text-gray-700 mb-2">
+                Your Last Name *
+              </label>
+              <input
+                type="text"
+                id="last-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+                placeholder="Last Name"
+              />
+            </div>
 
             <div>
               <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 mb-2">
