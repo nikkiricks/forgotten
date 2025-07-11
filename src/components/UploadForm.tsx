@@ -212,7 +212,7 @@ const UploadForm = () => {
                 onChange={(e) => setFirstName(e.target.value)}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
-                placeholder="first name"
+                placeholder="First Name"
               />
             </div>
 
@@ -227,7 +227,7 @@ const UploadForm = () => {
                 onChange={(e) => setLastName(e.target.value)}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
-                placeholder="last name"
+                placeholder="Last Name"
               />
             </div>
 

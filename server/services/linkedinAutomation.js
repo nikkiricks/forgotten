@@ -12,12 +12,14 @@ class LinkedInAutomationService {
 
   async initialize() {
     this.browser = await puppeteer.launch({
+      product: 'firefox',
+      protocol: 'webDriverBidi',
       headless: process.env.NODE_ENV === 'production',
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--incognito']
     });
     
     // Create incognito browser context
-    const context = await this.browser.createIncognitoBrowserContext();
+    const context = await this.browser.createBrowserContext();
     this.page = await context.newPage();
     
     // Set user agent to avoid detection
@@ -100,26 +102,27 @@ class LinkedInAutomationService {
 
   async fillDeceasedMemberForm(data) {
     // Fill requester contact information (based on the form structure from images)
-    await this.page.waitForSelector('input[placeholder="First Name"]', { timeout: 5000 });
-    await this.page.type('input[placeholder="First Name"]', data.firstName);
+    await this.page.waitForSelector('#dyna-first_name', { timeout: 5000 });
+    await this.page.type('#dyna-first_name', data.firstName);
     
-    await this.page.waitForSelector('input[placeholder="Last Name"]', { timeout: 5000 });
-    await this.page.type('input[placeholder="Last Name"]', data.lastName);
+    await this.page.waitForSelector('#dyna-last_name', { timeout: 5000 });
+    await this.page.type('#dyna-last_name', data.lastName);
     
-    await this.page.waitForSelector('input[placeholder="Name@example.com"]', { timeout: 5000 });
-    await this.page.type('input[placeholder="Name@example.com"]', data.contactEmail);
+    await this.page.waitForSelector('#dyna-email', { timeout: 5000 });
+    await this.page.type('#dyna-email', data.contactEmail);
 
     // Fill deceased person information
-    await this.page.waitForSelector('input[placeholder*="Deceased"]', { timeout: 5000 });
-    await this.page.type('input[placeholder*="Deceased"]', data.deceasedName);
+    await this.page.waitForSelector('#dyna-deceased_name', { timeout: 10000 });
+    await this.page.type('#dyna-deceased_name', data.deceasedName);
     
-    await this.page.waitForSelector('input[placeholder="i.e: linkedin.com/in/name"]', { timeout: 5000 });
-    await this.page.type('input[placeholder="i.e: linkedin.com/in/name"]', data.linkedinUrl);
+    await this.page.waitForSelector('#dyna-deceased_profile_url', { timeout: 5000 });
+    await this.page.type('#dyna-deceased_profile_url', data.linkedinUrl);
 
     // Add additional context in the description/details field
     const description = `
 Request to remove deceased member's LinkedIn profile.
-
+First Name: ${data.firstName}
+Last Name: ${data.lastName}
 Deceased: ${data.deceasedName}
 Profile: ${data.linkedinUrl}
 Date of Death: ${data.dateOfDeath || 'Not provided'}
@@ -139,7 +142,7 @@ Death certificate attached. Please process this removal request according to Lin
     }
 
     // Small delay to ensure all fields are filled
-    await this.page.waitForTimeout(1000);
+  await new Promise(resolve => setTimeout(resolve, 1000))
   }
 
   async uploadDeathCertificate(buffer, filename) {
@@ -167,12 +170,13 @@ Death certificate attached. Please process this removal request according to Lin
         await fileInput.uploadFile(tempPath);
         
         // Wait for upload to complete with multiple possible success indicators
+        await new Promise(resolve => setTimeout(resolve, 10000))
+
         try {
           await Promise.race([
             this.page.waitForSelector('.upload-success', { timeout: 15000 }),
             this.page.waitForSelector('[data-testid="upload-complete"]', { timeout: 15000 }),
             this.page.waitForSelector('.file-uploaded', { timeout: 15000 }),
-            this.page.waitForTimeout(3000) // Fallback timeout
           ]);
         } catch (uploadError) {
           console.warn('Upload confirmation not detected, but file may have uploaded:', uploadError.message);
@@ -222,6 +226,7 @@ Death certificate attached. Please process this removal request according to Lin
       }
 
       if (submitButton) {
+        console.log("submit button hit!")
         // Scroll to submit button to ensure it's visible
         await submitButton.scrollIntoView();
         
@@ -229,12 +234,12 @@ Death certificate attached. Please process this removal request according to Lin
         await submitButton.click();
         
         // Wait for navigation or success indicators
+        await new Promise(resolve => setTimeout(resolve, 10000))
         try {
           await Promise.race([
             this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }),
             this.page.waitForSelector('.success-message', { timeout: 15000 }),
             this.page.waitForSelector('.confirmation', { timeout: 15000 }),
-            this.page.waitForTimeout(5000) // Fallback timeout
           ]);
         } catch (navigationError) {
           console.warn('Navigation timeout, but form may have been submitted:', navigationError.message);

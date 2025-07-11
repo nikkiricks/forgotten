@@ -27,6 +27,8 @@ class RequestTracker {
       status: 'submitted',
       contactEmail: requestData.contactEmail,
       deceasedName: requestData.deceasedName,
+      firstName: requestData.firstName,
+      lastName: requestData.lastName,
       linkedinUrl: requestData.linkedinUrl,
       relationship: requestData.relationship,
       confirmationId: requestData.confirmationId,

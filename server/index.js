@@ -24,7 +24,6 @@ app.use(cors({
   origin: true, // Allow all origins in development
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
@@ -81,6 +80,8 @@ app.post('/api/upload-certificate', upload.single('certificate'), async (req, re
     const { 
       contactEmail, 
       deceasedName, 
+      firstName,
+      lastName,
       linkedinUrl, 
       relationship, 
       digitalSignature,
@@ -93,6 +94,8 @@ app.post('/api/upload-certificate', upload.single('certificate'), async (req, re
     const submissionData = {
       contactEmail,
       deceasedName,
+      firstName,
+      lastName,
       linkedinUrl,
       relationship,
       digitalSignature,
