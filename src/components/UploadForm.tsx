@@ -13,6 +13,8 @@ const UploadForm = () => {
   const [linkedinUrl, setLinkedinUrl] = useState('');
   const [instagramUrl, setInstagramUrl] = useState('');
   const [instagramRequestType, setInstagramRequestType] = useState('removal'); // For Instagram: removal or memorialization
+  const [facebookUrl, setFacebookUrl] = useState('');
+  const [facebookRequestType, setFacebookRequestType] = useState('removal'); // For Facebook: removal or memorialization
   const [relationship, setRelationship] = useState('');
   const [deathCertAttached, setDeathCertAttached] = useState(false);
   const [digitalSignature, setDigitalSignature] = useState('');
@@ -103,11 +105,16 @@ const UploadForm = () => {
     if (selectedPlatforms.includes('instagram') && !instagramUrl.trim()) {
       platformSpecificValid = false;
     }
+    
+    if (selectedPlatforms.includes('facebook') && !facebookUrl.trim()) {
+      platformSpecificValid = false;
+    }
 
     // Check if legal authorization file is required
     const needsLegalAuth = (
       (selectedPlatforms.includes('linkedin') && hasLegalAuth === 'yes') ||
-      (selectedPlatforms.includes('instagram') && instagramRequestType === 'removal' && hasLegalAuth === 'yes')
+      (selectedPlatforms.includes('instagram') && instagramRequestType === 'removal' && hasLegalAuth === 'yes') ||
+      (selectedPlatforms.includes('facebook') && facebookRequestType === 'removal' && hasLegalAuth === 'yes')
     );
 
     if (needsLegalAuth) {
@@ -131,6 +138,7 @@ const UploadForm = () => {
       }
       formData.append('selectedPlatforms', JSON.stringify(selectedPlatforms));
       formData.append('instagramRequestType', instagramRequestType);
+      formData.append('facebookRequestType', facebookRequestType);
       formData.append('hasLegalAuth', hasLegalAuth);
       formData.append('contactEmail', contactEmail);
       formData.append('deceasedName', deceasedName);
@@ -138,6 +146,7 @@ const UploadForm = () => {
       formData.append('lastName', lastName);
       formData.append('linkedinUrl', linkedinUrl);
       formData.append('instagramUrl', instagramUrl);
+      formData.append('facebookUrl', facebookUrl);
       formData.append('relationship', relationship);
       formData.append('digitalSignature', digitalSignature);
       formData.append('deceasedEmail', deceasedEmail);
@@ -189,12 +198,14 @@ const UploadForm = () => {
     setHasLegalAuth('');
     setSelectedPlatforms(['linkedin']);
     setInstagramRequestType('removal');
+    setFacebookRequestType('removal');
     setContactEmail('');
     setDeceasedName('');
     setFirstName('');
     setLastName('');
     setLinkedinUrl('');
     setInstagramUrl('');
+    setFacebookUrl('');
     setRelationship('');
     setDeathCertAttached(false);
     setDigitalSignature('');
@@ -330,6 +341,18 @@ const UploadForm = () => {
                   />
                   <label htmlFor="platform-instagram" className="text-sm text-gray-700">
                     <strong>Instagram</strong> - Social media account removal or memorialization
+                  </label>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="platform-facebook"
+                    checked={selectedPlatforms.includes('facebook')}
+                    onChange={(e) => handlePlatformChange('facebook', e.target.checked)}
+                    className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="platform-facebook" className="text-sm text-gray-700">
+                    <strong>Facebook</strong> - Social media account removal or memorialization
                   </label>
                 </div>
               </div>
@@ -496,6 +519,74 @@ const UploadForm = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Facebook Section */}
+                {selectedPlatforms.includes('facebook') && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h5 className="font-medium text-blue-900 mb-3 flex items-center">
+                      <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
+                      Facebook Account Information
+                    </h5>
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="facebook-url" className="block text-sm font-medium text-gray-700 mb-2">
+                          Facebook Profile URL *
+                        </label>
+                        <input
+                          type="url"
+                          id="facebook-url"
+                          value={facebookUrl}
+                          onChange={(e) => setFacebookUrl(e.target.value)}
+                          required={selectedPlatforms.includes('facebook')}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          placeholder="https://www.facebook.com/username"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                          Facebook Request Type *
+                        </label>
+                        <p className="text-sm text-gray-600 mb-4">
+                          <strong>Removal:</strong> Permanently deletes the account (requires family verification)<br/>
+                          <strong>Memorialization:</strong> Converts to memorial account (anyone can request with proof of death)
+                        </p>
+                        <div className="space-y-3">
+                          <div className="flex items-start space-x-3">
+                            <input
+                              type="radio"
+                              id="facebook-removal"
+                              name="facebookRequestType"
+                              value="removal"
+                              checked={facebookRequestType === 'removal'}
+                              onChange={(e) => setFacebookRequestType(e.target.value)}
+                              required
+                              className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                            />
+                            <label htmlFor="facebook-removal" className="text-sm text-gray-700">
+                              <strong>Permanent Removal</strong> - Delete the account completely (immediate family only)
+                            </label>
+                          </div>
+                          <div className="flex items-start space-x-3">
+                            <input
+                              type="radio"
+                              id="facebook-memorialization"
+                              name="facebookRequestType"
+                              value="memorialization"
+                              checked={facebookRequestType === 'memorialization'}
+                              onChange={(e) => setFacebookRequestType(e.target.value)}
+                              required
+                              className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                            />
+                            <label htmlFor="facebook-memorialization" className="text-sm text-gray-700">
+                              <strong>Memorialization</strong> - Convert to memorial account (anyone can request)
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -554,6 +645,15 @@ const UploadForm = () => {
                     <div>
                       <strong>Instagram:</strong> 
                       {instagramRequestType === 'removal' 
+                        ? " Removal requires family proof OR legal authorization"
+                        : " Memorialization only needs proof of death (legal auth optional but helpful)"
+                      }
+                    </div>
+                  )}
+                  {selectedPlatforms.includes('facebook') && (
+                    <div>
+                      <strong>Facebook:</strong> 
+                      {facebookRequestType === 'removal' 
                         ? " Removal requires family proof OR legal authorization"
                         : " Memorialization only needs proof of death (legal auth optional but helpful)"
                       }

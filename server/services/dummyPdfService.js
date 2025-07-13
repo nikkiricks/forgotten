@@ -59,8 +59,8 @@ class DummyPdfService {
     });
 
     const platform = data.platform || 'linkedin';
-    const platformName = platform === 'instagram' ? 'Instagram' : 'LinkedIn';
-    const profileUrl = data.linkedinUrl || data.instagramUrl || data.profileUrl;
+    const platformName = platform === 'instagram' ? 'Instagram' : platform === 'facebook' ? 'Facebook' : 'LinkedIn';
+    const profileUrl = data.linkedinUrl || data.instagramUrl || data.facebookUrl || data.profileUrl;
 
     return `
 <!DOCTYPE html>
