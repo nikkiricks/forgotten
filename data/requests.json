@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "id": "REQ_1752277769499_bruce",
+    "timestamp": "2025-07-13T15:42:49.499Z",
+    "status": "submitted",
+    "contactEmail": "nikki.ricks@gmail.com",
+    "deceasedName": "Bruce Ricks",
+    "firstName": "Nikki",
+    "lastName": "Ricks",
+    "linkedinUrl": "https://www.linkedin.com/in/bruce-ricks-7a077318/",
+    "relationship": "immediate-family",
+    "confirmationId": "AUTO_1752277769499",
+    "method": "automated",
+    "estimatedCompletion": "5-10 business days",
+    "lastUpdated": "2025-07-11T15:42:49.499Z",
+    "notes": []
+  }
+]
