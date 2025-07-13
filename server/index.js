@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import net from 'net';
 import LinkedInAutomationService from './services/linkedinAutomation.js';
 import InstagramAutomationService from './services/instagramAutomation.js';
+import FacebookAutomationService from './services/facebookAutomation.js';
 import RequestTracker from './services/requestTracker.js';
 import NotificationService from './services/notificationService.js';
 import DummyPdfService from './services/dummyPdfService.js';
@@ -33,6 +34,7 @@ app.use(express.json());
 // Initialize services
 const linkedinService = new LinkedInAutomationService();
 const instagramService = new InstagramAutomationService();
+const facebookService = new FacebookAutomationService();
 const requestTracker = new RequestTracker();
 const notificationService = new NotificationService();
 const dummyPdfService = new DummyPdfService();
@@ -97,12 +99,14 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
     const { 
       selectedPlatforms: selectedPlatformsStr,
       instagramRequestType,
+      facebookRequestType,
       contactEmail, 
       deceasedName, 
       firstName,
       lastName,
       linkedinUrl,
       instagramUrl,
+      facebookUrl,
       relationship, 
       digitalSignature,
       deceasedEmail,
@@ -119,7 +123,8 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
     
     const needsDummyAuth = (
       (selectedPlatforms.includes('linkedin') && hasLegalAuth === 'no') ||
-      (selectedPlatforms.includes('instagram') && instagramRequestType === 'removal' && hasLegalAuth === 'no')
+      (selectedPlatforms.includes('instagram') && instagramRequestType === 'removal' && hasLegalAuth === 'no') ||
+      (selectedPlatforms.includes('facebook') && facebookRequestType === 'removal' && hasLegalAuth === 'no')
     );
     
     if (needsDummyAuth) {
@@ -129,7 +134,7 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
         lastName,
         contactEmail,
         deceasedName,
-        linkedinUrl: linkedinUrl || instagramUrl,
+        linkedinUrl: linkedinUrl || instagramUrl || facebookUrl,
         relationship,
         dateOfDeath,
         digitalSignature,
@@ -145,12 +150,14 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
     const baseSubmissionData = {
       selectedPlatforms,
       instagramRequestType,
+      facebookRequestType,
       contactEmail,
       deceasedName,
       firstName,
       lastName,
       linkedinUrl,
       instagramUrl,
+      facebookUrl,
       relationship,
       digitalSignature,
       deceasedEmail,
@@ -180,7 +187,7 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
       const platformSubmissionData = {
         ...baseSubmissionData,
         platform,
-        requestType: platform === 'instagram' ? instagramRequestType : 'removal'
+        requestType: platform === 'instagram' ? instagramRequestType : platform === 'facebook' ? facebookRequestType : 'removal'
       };
       
       console.log(`Processing ${platform} request...`);
@@ -201,6 +208,25 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
             error: error.message,
             message: 'Instagram automation failed, request will be processed manually',
             estimatedProcessingTime: '7-14 business days',
+            method: 'automation_failed'
+          };
+        }
+      } else if (platform === 'facebook') {
+        // Facebook automation
+        try {
+          automationResults[platform] = await facebookService.submitDeceasedAccountForm(
+            platformSubmissionData,
+            certificateFile.buffer,
+            legalAuthBuffer
+          );
+        } catch (error) {
+          console.error('Facebook automation failed:', error);
+          automationResults[platform] = {
+            success: false,
+            confirmationId: `MANUAL_FB_${Date.now()}`,
+            error: error.message,
+            message: 'Facebook automation failed, request will be processed manually',
+            estimatedProcessingTime: '14-30 business days',
             method: 'automation_failed'
           };
         }
