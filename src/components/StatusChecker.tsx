@@ -15,7 +15,7 @@ const StatusChecker = () => {
     setError(null);
 
     try {
-      const response = await fetch(`http://localhost:3001/api/request-status/${encodeURIComponent(email)}`);
+      const response = await fetch(`http://localhost:8000/api/request-status/${encodeURIComponent(email)}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch request status');

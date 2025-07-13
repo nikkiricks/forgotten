@@ -33,7 +33,7 @@ class LinkedInAutomationService {
     });
   }
 
-  async submitDeceasedMemberForm(submissionData, certificateBuffer) {
+  async submitDeceasedMemberForm(submissionData, certificateBuffer, legalAuthBuffer = null) {
     try {
       await this.initialize();
 
@@ -49,9 +49,16 @@ class LinkedInAutomationService {
       // Fill out the form with the correct field mappings
       await this.fillDeceasedMemberForm(submissionData);
 
-      // Handle file upload if certificate provided
+      // Handle file uploads
       if (certificateBuffer) {
         await this.uploadDeathCertificate(certificateBuffer, submissionData.file.originalname);
+      }
+      
+      if (legalAuthBuffer) {
+        const legalAuthFilename = submissionData.legalAuthFile ? 
+          submissionData.legalAuthFile.originalname : 
+          `legal_auth_${submissionData.deceasedName.replace(/\s+/g, '_')}.pdf`;
+        await this.uploadLegalAuthDocument(legalAuthBuffer, legalAuthFilename);
       }
 
       // Submit the form
@@ -71,11 +78,13 @@ class LinkedInAutomationService {
     } catch (error) {
       console.error('LinkedIn automation error:', error);
       
-      // Fallback to email method if automation fails
+      // Fallback to manual processing if automation fails
       return {
         success: false,
+        confirmationId: `MANUAL_${Date.now()}`,
         error: error.message,
-        message: 'Automation failed, manual processing required',
+        message: 'Automation failed, request will be processed manually',
+        estimatedProcessingTime: '5-10 business days',
         method: 'automation_failed'
       };
     } finally {
@@ -189,6 +198,83 @@ Death certificate attached. Please process this removal request according to Lin
     } finally {
       // Clean up temp file
       const tempPath = path.join('/tmp', `temp_${Date.now()}_${filename}`);
+      if (fs.existsSync(tempPath)) {
+        fs.unlinkSync(tempPath);
+      }
+    }
+  }
+
+  async uploadLegalAuthDocument(buffer, filename) {
+    try {
+      // Save buffer temporarily for upload
+      const tempPath = path.join('/tmp', `temp_legal_${Date.now()}_${filename}`);
+      fs.writeFileSync(tempPath, buffer);
+
+      // Look for additional file upload inputs or tabs
+      const fileInputSelectors = [
+        'input[type="file"]:nth-of-type(2)', // Second file input
+        'input[accept*="pdf"]:nth-of-type(2)',
+        '[data-testid="legal-auth-upload"]',
+        '[data-testid="additional-document-upload"]',
+        '.legal-document-upload input',
+        '#legal-auth-file'
+      ];
+
+      let fileInput = null;
+      for (const selector of fileInputSelectors) {
+        fileInput = await this.page.$(selector);
+        if (fileInput) break;
+      }
+
+      // If no second file input found, look for "Add another document" or similar buttons
+      if (!fileInput) {
+        const addDocumentSelectors = [
+          'button:contains("Add")',
+          'button:contains("Attach")',
+          'a:contains("additional")',
+          '.add-document-btn'
+        ];
+
+        for (const selector of addDocumentSelectors) {
+          const addButton = await this.page.$(selector);
+          if (addButton) {
+            await addButton.click();
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Try to find file input again after clicking add button
+            for (const inputSelector of fileInputSelectors) {
+              fileInput = await this.page.$(inputSelector);
+              if (fileInput) break;
+            }
+            break;
+          }
+        }
+      }
+
+      if (fileInput) {
+        await fileInput.uploadFile(tempPath);
+        
+        // Wait for upload to complete
+        await new Promise(resolve => setTimeout(resolve, 10000))
+
+        try {
+          await Promise.race([
+            this.page.waitForSelector('.upload-success', { timeout: 15000 }),
+            this.page.waitForSelector('[data-testid="upload-complete"]', { timeout: 15000 }),
+            this.page.waitForSelector('.file-uploaded', { timeout: 15000 }),
+          ]);
+          console.log('Legal authorization document uploaded successfully');
+        } catch (uploadError) {
+          console.warn('Legal auth upload confirmation not detected, but file may have uploaded:', uploadError.message);
+        }
+      } else {
+        console.warn('Legal authorization file upload input not found - LinkedIn form may not support multiple documents in this session');
+      }
+    } catch (error) {
+      console.error('Error uploading legal authorization document:', error);
+    } finally {
+      // Clean up temp file
+      const tempPath = path.join('/tmp', `temp_legal_${Date.now()}_${filename}`);
       if (fs.existsSync(tempPath)) {
         fs.unlinkSync(tempPath);
       }
