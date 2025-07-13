@@ -9,6 +9,7 @@ import net from 'net';
 import LinkedInAutomationService from './services/linkedinAutomation.js';
 import InstagramAutomationService from './services/instagramAutomation.js';
 import FacebookAutomationService from './services/facebookAutomation.js';
+import YouTubeAutomationService from './services/youtubeAutomation.js';
 import RequestTracker from './services/requestTracker.js';
 import NotificationService from './services/notificationService.js';
 import DummyPdfService from './services/dummyPdfService.js';
@@ -35,6 +36,7 @@ app.use(express.json());
 const linkedinService = new LinkedInAutomationService();
 const instagramService = new InstagramAutomationService();
 const facebookService = new FacebookAutomationService();
+const youtubeService = new YouTubeAutomationService();
 const requestTracker = new RequestTracker();
 const notificationService = new NotificationService();
 const dummyPdfService = new DummyPdfService();
@@ -107,6 +109,7 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
       linkedinUrl,
       instagramUrl,
       facebookUrl,
+      youtubeUrl,
       relationship, 
       digitalSignature,
       deceasedEmail,
@@ -124,7 +127,8 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
     const needsDummyAuth = (
       (selectedPlatforms.includes('linkedin') && hasLegalAuth === 'no') ||
       (selectedPlatforms.includes('instagram') && instagramRequestType === 'removal' && hasLegalAuth === 'no') ||
-      (selectedPlatforms.includes('facebook') && facebookRequestType === 'removal' && hasLegalAuth === 'no')
+      (selectedPlatforms.includes('facebook') && facebookRequestType === 'removal' && hasLegalAuth === 'no') ||
+      (selectedPlatforms.includes('youtube') && hasLegalAuth === 'no')
     );
     
     if (needsDummyAuth) {
@@ -134,7 +138,7 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
         lastName,
         contactEmail,
         deceasedName,
-        linkedinUrl: linkedinUrl || instagramUrl || facebookUrl,
+        linkedinUrl: linkedinUrl || instagramUrl || facebookUrl || youtubeUrl,
         relationship,
         dateOfDeath,
         digitalSignature,
@@ -158,6 +162,7 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
       linkedinUrl,
       instagramUrl,
       facebookUrl,
+      youtubeUrl,
       relationship,
       digitalSignature,
       deceasedEmail,
@@ -227,6 +232,25 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
             error: error.message,
             message: 'Facebook automation failed, request will be processed manually',
             estimatedProcessingTime: '14-30 business days',
+            method: 'automation_failed'
+          };
+        }
+      } else if (platform === 'youtube') {
+        // YouTube automation
+        try {
+          automationResults[platform] = await youtubeService.submitDeceasedAccountForm(
+            platformSubmissionData,
+            certificateFile.buffer,
+            legalAuthBuffer
+          );
+        } catch (error) {
+          console.error('YouTube automation failed:', error);
+          automationResults[platform] = {
+            success: false,
+            confirmationId: `MANUAL_YT_${Date.now()}`,
+            error: error.message,
+            message: 'YouTube automation failed, request will be processed manually',
+            estimatedProcessingTime: '14-21 business days',
             method: 'automation_failed'
           };
         }
