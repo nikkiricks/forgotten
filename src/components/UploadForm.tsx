@@ -3,6 +3,8 @@ import { Upload, Check, AlertCircle, FileText, Shield } from 'lucide-react';
 
 const UploadForm = () => {
   const [file, setFile] = useState<File | null>(null);
+  const [legalAuthFile, setLegalAuthFile] = useState<File | null>(null);
+  const [hasLegalAuth, setHasLegalAuth] = useState<string>('');
   const [contactEmail, setContactEmail] = useState('');
   const [deceasedName, setDeceasedName] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -27,6 +29,13 @@ const UploadForm = () => {
     if (selectedFile) {
       setFile(selectedFile);
       setDeathCertAttached(false); // Reset checkbox when new file is selected
+    }
+  };
+
+  const handleLegalAuthFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      setLegalAuthFile(selectedFile);
     }
   };
 
@@ -59,7 +68,7 @@ const UploadForm = () => {
   };
 
   const isFormValid = () => {
-    return (
+    const baseValid = (
       file &&
       contactEmail.trim() &&
       deceasedName.trim() &&
@@ -69,8 +78,17 @@ const UploadForm = () => {
       relationship &&
       deathCertAttached &&
       digitalSignature.trim() &&
-      isValidFileType(file)
+      isValidFileType(file) &&
+      hasLegalAuth.trim()
     );
+
+    // If they have legal auth, they must upload the file
+    if (hasLegalAuth === 'yes') {
+      return baseValid && legalAuthFile && isValidFileType(legalAuthFile);
+    }
+
+    // If they don't have legal auth, base validation is enough (dummy will be created)
+    return baseValid;
   };
 
   const submitDocument = async () => {
@@ -82,6 +100,10 @@ const UploadForm = () => {
     try {
       const formData = new FormData();
       formData.append('certificate', file);
+      if (legalAuthFile) {
+        formData.append('legalAuth', legalAuthFile);
+      }
+      formData.append('hasLegalAuth', hasLegalAuth);
       formData.append('contactEmail', contactEmail);
       formData.append('deceasedName', deceasedName);
       formData.append('firstName', firstName);
@@ -92,17 +114,30 @@ const UploadForm = () => {
       formData.append('deceasedEmail', deceasedEmail);
       formData.append('dateOfDeath', dateOfDeath);
 
-      const response = await fetch('http://localhost:3001/api/upload-certificate', {
+      const response = await fetch('http://localhost:8000/api/upload-certificate', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit document');
+        let errorMessage = 'Failed to submit document';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (jsonError) {
+          console.error('Failed to parse error response:', jsonError);
+          errorMessage = `Server error (${response.status}): ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error('Failed to parse success response:', jsonError);
+        throw new Error('Server returned invalid response format');
+      }
       setSubmissionResult(result);
       setSubmitted(true);
     } catch (err) {
@@ -121,6 +156,8 @@ const UploadForm = () => {
     setSubmitted(false);
     setSubmissionResult(null);
     setFile(null);
+    setLegalAuthFile(null);
+    setHasLegalAuth('');
     setContactEmail('');
     setDeceasedName('');
     setFirstName('');
@@ -313,6 +350,111 @@ const UploadForm = () => {
                 </div>
               </div>
             </div>
+
+            {/* Legal Authorization Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Do you have legal authorization documents? *
+              </label>
+              <p className="text-sm text-gray-600 mb-4">
+                LinkedIn requires either a death certificate AND one of the following legal documents: Letters of Administration, Letters Testamentary, or a court order appointing you as an authorized representative for the deceased member's estate.
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="radio"
+                    id="has-legal-auth-yes"
+                    name="hasLegalAuth"
+                    value="yes"
+                    checked={hasLegalAuth === 'yes'}
+                    onChange={(e) => setHasLegalAuth(e.target.value)}
+                    required
+                    className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                  />
+                  <label htmlFor="has-legal-auth-yes" className="text-sm text-gray-700">
+                    Yes, I have Letters of Administration, Letters Testamentary, or court order documents
+                  </label>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="radio"
+                    id="has-legal-auth-no"
+                    name="hasLegalAuth"
+                    value="no"
+                    checked={hasLegalAuth === 'no'}
+                    onChange={(e) => setHasLegalAuth(e.target.value)}
+                    required
+                    className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                  />
+                  <label htmlFor="has-legal-auth-no" className="text-sm text-gray-700">
+                    No, I only have the death certificate
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Conditional Legal Auth File Upload */}
+            {hasLegalAuth === 'yes' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Legal Authorization Document *
+                </label>
+                <p className="text-sm text-gray-600 mb-3">
+                  Upload your Letters of Administration, Letters Testamentary, or court order document.
+                </p>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors">
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={handleLegalAuthFileChange}
+                    className="hidden"
+                    id="legal-auth-upload"
+                    required={hasLegalAuth === 'yes'}
+                  />
+                  <label htmlFor="legal-auth-upload" className="cursor-pointer">
+                    <div className="flex flex-col items-center">
+                      <Upload className="w-8 h-8 text-gray-400 mb-3" />
+                      <p className="text-sm font-medium text-gray-900 mb-1">
+                        Click to upload legal authorization document
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        PDF, PNG, or JPG files only (max 10MB)
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                {legalAuthFile && (
+                  <div className="mt-3 flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <FileText className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">{legalAuthFile.name}</p>
+                      <p className="text-xs text-gray-600">
+                        {(legalAuthFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    {!isValidFileType(legalAuthFile) && (
+                      <AlertCircle className="w-4 h-4 text-red-500" />
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Info for those without legal auth */}
+            {hasLegalAuth === 'no' && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-medium text-blue-900 mb-1">We'll Help You Navigate This</h4>
+                    <p className="text-sm text-blue-800">
+                      Don't worry - many families don't have formal legal authorization documents. We'll submit your request with the death certificate and work with LinkedIn to process it through their verification procedures for immediate family members.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* File Upload */}
             <div>

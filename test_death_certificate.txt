@@ -1,0 +1,6 @@
+TEST DEATH CERTIFICATE
+
+This is a test file for upload testing.
+Not a real death certificate.
+
+For testing purposes only.
