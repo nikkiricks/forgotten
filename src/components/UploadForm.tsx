@@ -15,6 +15,7 @@ const UploadForm = () => {
   const [instagramRequestType, setInstagramRequestType] = useState('removal'); // For Instagram: removal or memorialization
   const [facebookUrl, setFacebookUrl] = useState('');
   const [facebookRequestType, setFacebookRequestType] = useState('removal'); // For Facebook: removal or memorialization
+  const [youtubeUrl, setYoutubeUrl] = useState('');
   const [relationship, setRelationship] = useState('');
   const [deathCertAttached, setDeathCertAttached] = useState(false);
   const [digitalSignature, setDigitalSignature] = useState('');
@@ -109,12 +110,17 @@ const UploadForm = () => {
     if (selectedPlatforms.includes('facebook') && !facebookUrl.trim()) {
       platformSpecificValid = false;
     }
+    
+    if (selectedPlatforms.includes('youtube') && !youtubeUrl.trim()) {
+      platformSpecificValid = false;
+    }
 
     // Check if legal authorization file is required
     const needsLegalAuth = (
       (selectedPlatforms.includes('linkedin') && hasLegalAuth === 'yes') ||
       (selectedPlatforms.includes('instagram') && instagramRequestType === 'removal' && hasLegalAuth === 'yes') ||
-      (selectedPlatforms.includes('facebook') && facebookRequestType === 'removal' && hasLegalAuth === 'yes')
+      (selectedPlatforms.includes('facebook') && facebookRequestType === 'removal' && hasLegalAuth === 'yes') ||
+      (selectedPlatforms.includes('youtube') && hasLegalAuth === 'yes')
     );
 
     if (needsLegalAuth) {
@@ -147,6 +153,7 @@ const UploadForm = () => {
       formData.append('linkedinUrl', linkedinUrl);
       formData.append('instagramUrl', instagramUrl);
       formData.append('facebookUrl', facebookUrl);
+      formData.append('youtubeUrl', youtubeUrl);
       formData.append('relationship', relationship);
       formData.append('digitalSignature', digitalSignature);
       formData.append('deceasedEmail', deceasedEmail);
@@ -206,6 +213,7 @@ const UploadForm = () => {
     setLinkedinUrl('');
     setInstagramUrl('');
     setFacebookUrl('');
+    setYoutubeUrl('');
     setRelationship('');
     setDeathCertAttached(false);
     setDigitalSignature('');
@@ -353,6 +361,18 @@ const UploadForm = () => {
                   />
                   <label htmlFor="platform-facebook" className="text-sm text-gray-700">
                     <strong>Facebook</strong> - Social media account removal or memorialization
+                  </label>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="platform-youtube"
+                    checked={selectedPlatforms.includes('youtube')}
+                    onChange={(e) => handlePlatformChange('youtube', e.target.checked)}
+                    className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="platform-youtube" className="text-sm text-gray-700">
+                    <strong>YouTube</strong> - Video platform account removal (Google Account)
                   </label>
                 </div>
               </div>
@@ -587,6 +607,39 @@ const UploadForm = () => {
                     </div>
                   </div>
                 )}
+
+                {/* YouTube Section */}
+                {selectedPlatforms.includes('youtube') && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <h5 className="font-medium text-red-900 mb-3 flex items-center">
+                      <span className="w-2 h-2 bg-red-600 rounded-full mr-2"></span>
+                      YouTube Account Information
+                    </h5>
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="youtube-url" className="block text-sm font-medium text-gray-700 mb-2">
+                          YouTube Channel URL *
+                        </label>
+                        <input
+                          type="url"
+                          id="youtube-url"
+                          value={youtubeUrl}
+                          onChange={(e) => setYoutubeUrl(e.target.value)}
+                          required={selectedPlatforms.includes('youtube')}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400"
+                          placeholder="https://www.youtube.com/@channelname or https://www.youtube.com/c/channelname"
+                        />
+                      </div>
+                      
+                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-sm text-yellow-800">
+                          <strong>Note:</strong> YouTube/Google only supports account removal (not memorialization). 
+                          Removing a YouTube account will also remove the associated Google Account and all connected services.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -657,6 +710,11 @@ const UploadForm = () => {
                         ? " Removal requires family proof OR legal authorization"
                         : " Memorialization only needs proof of death (legal auth optional but helpful)"
                       }
+                    </div>
+                  )}
+                  {selectedPlatforms.includes('youtube') && (
+                    <div>
+                      <strong>YouTube/Google:</strong> Account removal requires family proof OR legal authorization
                     </div>
                   )}
                 </div>
