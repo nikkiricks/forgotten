@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Forgotten is a digital legacy management service that helps families remove deceased loved ones' online accounts, starting with LinkedIn. The application uses web automation to submit removal requests directly to LinkedIn's deceased member form.
+Forgotten is a comprehensive digital legacy management service that helps families remove deceased loved ones' online accounts across multiple platforms including LinkedIn and Instagram. The application uses web automation to submit removal requests directly to each platform's deceased member forms.
 
 ## Development Commands
 
@@ -51,21 +51,24 @@ npm run lint         # Run ESLint
 - Input sanitization and validation
 - Files immediately cleared from memory after processing
 
-### LinkedIn Automation
-The core automation (`server/services/linkedinAutomation.js`) uses Puppeteer with Firefox to:
-1. Navigate to LinkedIn's deceased member removal form
-2. Fill out the form with provided family/deceased information
-3. Upload death certificates
-4. Submit the request and capture confirmation details
+### Multi-Platform Automation
+- **LinkedIn Automation** (`server/services/linkedinAutomation.js`): Handles LinkedIn's professional network deceased member removal
+- **Instagram Automation** (`server/services/instagramAutomation.js`): Handles Instagram's social media deceased account removal/memorialization
+
+Both services use Puppeteer with Firefox to:
+1. Navigate to platform-specific deceased member forms
+2. Fill out forms with provided family/deceased information
+3. Upload death certificates and legal authorization documents
+4. Submit requests and capture confirmation details
 5. Fallback to manual processing if automation fails
 
 ### Data Flow
-1. User uploads death certificate via React frontend
+1. User selects platforms and uploads death certificate via React frontend
 2. Express backend receives file in memory via Multer
-3. LinkedIn automation service attempts automated submission
-4. Request tracked in JSON storage with confirmation ID
-5. Email notifications sent to family and admin
-6. File buffer immediately cleared from memory
+3. Multi-platform automation processes each selected platform in parallel
+4. Individual requests tracked per platform with separate confirmation IDs
+5. Email notifications sent to family and admin with comprehensive results
+6. File buffers immediately cleared from memory
 
 ## Environment Configuration
 

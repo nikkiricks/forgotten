@@ -4,8 +4,8 @@ import { Facebook, Instagram, Youtube, Globe } from 'lucide-react';
 const ComingSoon = () => {
   const platforms = [
     { name: 'Facebook', icon: Facebook, color: 'text-blue-600' },
-    { name: 'Instagram', icon: Instagram, color: 'text-pink-600' },
     { name: 'YouTube', icon: Youtube, color: 'text-red-600' },
+    { name: 'Twitter/X', icon: Globe, color: 'text-gray-900' },
     { name: 'More platforms', icon: Globe, color: 'text-gray-600' },
   ];
 
@@ -14,11 +14,11 @@ const ComingSoon = () => {
       <div className="max-w-4xl mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Coming Soon
+            More Platforms Coming Soon
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            We're expanding to help with more platforms, making the process 
-            of managing digital legacy even easier
+            We now support LinkedIn and Instagram. We're expanding to help with 
+            even more platforms, making digital legacy management comprehensive
           </p>
         </div>
 
