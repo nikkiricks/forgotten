@@ -58,6 +58,10 @@ class DummyPdfService {
       day: 'numeric'
     });
 
+    const platform = data.platform || 'linkedin';
+    const platformName = platform === 'instagram' ? 'Instagram' : 'LinkedIn';
+    const profileUrl = data.linkedinUrl || data.instagramUrl || data.profileUrl;
+
     return `
 <!DOCTYPE html>
 <html>
@@ -140,7 +144,7 @@ class DummyPdfService {
     <div class="header">
         <div class="title">Affidavit of Family Relationship</div>
         <div style="margin-top: 10px; font-size: 14px;">
-            For Deceased LinkedIn Member Account Management
+            For Deceased ${platformName} Account Management
         </div>
     </div>
 
@@ -161,8 +165,8 @@ class DummyPdfService {
         </div>
         
         <div class="field">
-            <span class="label">LinkedIn Profile:</span>
-            <span class="value">${data.linkedinUrl}</span>
+            <span class="label">${platformName} Profile:</span>
+            <span class="value">${profileUrl}</span>
         </div>
         
         <div class="field">
@@ -187,14 +191,14 @@ class DummyPdfService {
         <ol>
             <li>I am the ${data.relationship === 'immediate-family' ? 'immediate family member' : 'authorized representative'} of the deceased person named above.</li>
             <li>The deceased person named above has passed away, as evidenced by the death certificate provided with this request.</li>
-            <li>I am requesting the removal/memorialization of the deceased person's LinkedIn account as part of managing their digital legacy.</li>
+            <li>I am requesting the removal/memorialization of the deceased person's ${platformName} account as part of managing their digital legacy.</li>
             <li>I understand that providing false information in this affidavit may result in legal consequences.</li>
             <li>I acknowledge that while I do not possess formal court-appointed legal authorization documents at this time, I am acting in good faith as a family member to manage the deceased's digital accounts.</li>
         </ol>
     </div>
 
     <div class="notice">
-        <strong>Notice:</strong> This affidavit is provided in lieu of formal legal authorization documents (Letters of Administration, Letters Testamentary, or court orders). The requester acknowledges that LinkedIn may require additional verification or formal legal documentation to process this request.
+        <strong>Notice:</strong> This affidavit is provided in lieu of formal legal authorization documents (Letters of Administration, Letters Testamentary, or court orders). The requester acknowledges that ${platformName} may require additional verification or formal legal documentation to process this request.
     </div>
 
     <div class="signature-section">
@@ -211,7 +215,7 @@ class DummyPdfService {
     </div>
 
     <div class="footer">
-        <p>This document was generated automatically to accompany a LinkedIn deceased member removal request.</p>
+        <p>This document was generated automatically to accompany a ${platformName} deceased account removal request.</p>
         <p>Generated on ${currentDate}</p>
     </div>
 </body>

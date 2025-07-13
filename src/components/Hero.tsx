@@ -20,7 +20,7 @@ const Hero = () => {
             href="#upload"
             className="bg-purple-400 text-white px-8 py-3 rounded-lg font-medium hover:bg-purple-500 transition-colors flex items-center justify-center space-x-2"
           >
-            <span>Start with LinkedIn</span>
+            <span>Begin Your Request</span>
             <ArrowRight className="w-4 h-4" />
           </a>
           <a

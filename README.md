@@ -1,6 +1,6 @@
 # Forgotten - Digital Legacy Management
 
-A respectful tool to help families remove deceased loved ones' online accounts, starting with LinkedIn.
+A respectful tool to help families remove deceased loved ones' online accounts across multiple platforms including LinkedIn and Instagram.
 
 ## 🚀 Quick Production Setup (5 minutes)
 

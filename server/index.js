@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import net from 'net';
 import LinkedInAutomationService from './services/linkedinAutomation.js';
+import InstagramAutomationService from './services/instagramAutomation.js';
 import RequestTracker from './services/requestTracker.js';
 import NotificationService from './services/notificationService.js';
 import DummyPdfService from './services/dummyPdfService.js';
@@ -31,6 +32,7 @@ app.use(express.json());
 
 // Initialize services
 const linkedinService = new LinkedInAutomationService();
+const instagramService = new InstagramAutomationService();
 const requestTracker = new RequestTracker();
 const notificationService = new NotificationService();
 const dummyPdfService = new DummyPdfService();
@@ -93,11 +95,14 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
     const legalAuthFile = req.files.legalAuth ? req.files.legalAuth[0] : null;
     
     const { 
+      selectedPlatforms: selectedPlatformsStr,
+      instagramRequestType,
       contactEmail, 
       deceasedName, 
       firstName,
       lastName,
-      linkedinUrl, 
+      linkedinUrl,
+      instagramUrl,
       relationship, 
       digitalSignature,
       deceasedEmail,
@@ -106,21 +111,29 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
       hasLegalAuth
     } = req.body;
 
-    // Generate dummy legal auth PDF if user doesn't have legal authorization documents
+    const selectedPlatforms = JSON.parse(selectedPlatformsStr || '["linkedin"]');
+
+    // Generate dummy legal auth PDF if needed
     let legalAuthBuffer = null;
     let legalAuthFilename = null;
     
-    if (hasLegalAuth === 'no') {
-      console.log('Generating dummy legal authorization PDF...');
+    const needsDummyAuth = (
+      (selectedPlatforms.includes('linkedin') && hasLegalAuth === 'no') ||
+      (selectedPlatforms.includes('instagram') && instagramRequestType === 'removal' && hasLegalAuth === 'no')
+    );
+    
+    if (needsDummyAuth) {
+      console.log(`Generating dummy legal authorization PDF for ${selectedPlatforms.join(', ')}...`);
       legalAuthBuffer = await dummyPdfService.generateDummyLegalAuthPdf({
         firstName,
         lastName,
         contactEmail,
         deceasedName,
-        linkedinUrl,
+        linkedinUrl: linkedinUrl || instagramUrl,
         relationship,
         dateOfDeath,
-        digitalSignature
+        digitalSignature,
+        platform: selectedPlatforms[0] // Use first platform for PDF template
       });
       legalAuthFilename = `legal_auth_affidavit_${deceasedName.replace(/\s+/g, '_')}.pdf`;
     } else if (legalAuthFile) {
@@ -128,13 +141,16 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
       legalAuthFilename = legalAuthFile.originalname;
     }
 
-    // Prepare submission data
-    const submissionData = {
+    // Prepare base submission data
+    const baseSubmissionData = {
+      selectedPlatforms,
+      instagramRequestType,
       contactEmail,
       deceasedName,
       firstName,
       lastName,
       linkedinUrl,
+      instagramUrl,
       relationship,
       digitalSignature,
       deceasedEmail,
@@ -153,55 +169,78 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
       } : null
     };
 
-    // Attempt automated LinkedIn submission
-    console.log(`Processing automated LinkedIn removal for: ${deceasedName}`);
+    // Process requests for all selected platforms
+    console.log(`Processing ${selectedPlatforms.join(' + ')} requests for: ${deceasedName}`);
     console.log(`Has legal auth: ${hasLegalAuth}, Legal auth buffer length: ${legalAuthBuffer ? legalAuthBuffer.length : 0}`);
     
-    // TEMPORARY: Skip LinkedIn automation due to LinkedIn API issues
-    // Let's focus on testing the legal authorization feature itself
-    const automationResult = {
-      success: true,
-      confirmationId: `SUBMITTED_${Date.now()}`,
-      message: 'Request submitted successfully - will be processed manually due to LinkedIn API limitations',
-      estimatedProcessingTime: '5-10 business days',
-      method: 'manual_processing'
+    const automationResults = {};
+    
+    // Process each platform
+    for (const platform of selectedPlatforms) {
+      const platformSubmissionData = {
+        ...baseSubmissionData,
+        platform,
+        requestType: platform === 'instagram' ? instagramRequestType : 'removal'
+      };
+      
+      console.log(`Processing ${platform} request...`);
+      
+      if (platform === 'instagram') {
+        // Instagram automation
+        try {
+          automationResults[platform] = await instagramService.submitDeceasedAccountForm(
+            platformSubmissionData,
+            certificateFile.buffer,
+            legalAuthBuffer
+          );
+        } catch (error) {
+          console.error('Instagram automation failed:', error);
+          automationResults[platform] = {
+            success: false,
+            confirmationId: `MANUAL_IG_${Date.now()}`,
+            error: error.message,
+            message: 'Instagram automation failed, request will be processed manually',
+            estimatedProcessingTime: '7-14 business days',
+            method: 'automation_failed'
+          };
+        }
+      } else if (platform === 'linkedin') {
+        // LinkedIn automation (currently disabled for testing)
+        automationResults[platform] = {
+          success: true,
+          confirmationId: `SUBMITTED_LI_${Date.now()}`,
+          message: 'LinkedIn request submitted successfully - processed manually due to API limitations',
+          estimatedProcessingTime: '5-10 business days',
+          method: 'manual_processing'
+        };
+        
+        console.log('LinkedIn automation temporarily disabled - focusing on feature testing');
+      }
+    }
+    
+    // Create combined result
+    const combinedResult = {
+      success: Object.values(automationResults).every(result => result.success),
+      platforms: automationResults,
+      totalPlatforms: selectedPlatforms.length,
+      message: `Multi-platform request submitted for ${selectedPlatforms.join(', ')}`,
+      estimatedProcessingTime: '5-14 business days'
     };
-    
-    console.log('LinkedIn automation skipped - focusing on legal auth feature testing');
-    
-    // let automationResult;
-    // try {
-    //   automationResult = await linkedinService.submitDeceasedMemberForm(
-    //     submissionData, 
-    //     certificateFile.buffer, 
-    //     legalAuthBuffer
-    //   );
-    // } catch (automationError) {
-    //   console.error('LinkedIn automation service failed:', automationError);
-    //   // Fallback result if automation service crashes
-    //   automationResult = {
-    //     success: false,
-    //     confirmationId: `FALLBACK_${Date.now()}`,
-    //     error: automationError.message,
-    //     message: 'Automation service unavailable, request will be processed manually',
-    //     estimatedProcessingTime: '5-10 business days',
-    //     method: 'service_fallback'
-    //   };
-    // }
     
     // Track the request
     const trackedRequest = await requestTracker.saveRequest({
-      ...submissionData,
-      confirmationId: automationResult.confirmationId,
-      method: automationResult.method,
-      estimatedProcessingTime: automationResult.estimatedProcessingTime
+      ...baseSubmissionData,
+      confirmationId: `MULTI_${Date.now()}`,
+      method: 'multi_platform',
+      platforms: automationResults,
+      estimatedProcessingTime: combinedResult.estimatedProcessingTime
     });
     
     // Send confirmation to family
-    await notificationService.sendConfirmationToFamily(submissionData, automationResult);
+    await notificationService.sendConfirmationToFamily(baseSubmissionData, combinedResult);
     
     // Send admin notification
-    await notificationService.sendAdminNotification(submissionData, automationResult);
+    await notificationService.sendAdminNotification(baseSubmissionData, combinedResult);
 
     // Clear the buffers from memory immediately
     certificateFile.buffer = null;
@@ -214,14 +253,15 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
     if (legalAuthFilename) {
       console.log(`Legal auth document: ${legalAuthFilename} (${hasLegalAuth === 'no' ? 'generated dummy PDF' : 'user uploaded'})`);
     }
-    console.log(`LinkedIn automation result: ${automationResult.success ? 'SUCCESS' : 'FALLBACK'} - ${automationResult.confirmationId}`);
+    console.log(`Multi-platform automation results:`, automationResults);
     
     res.json({ 
       success: true, 
-      message: 'LinkedIn removal request submitted successfully',
-      confirmationId: automationResult.confirmationId,
+      message: combinedResult.message,
+      platforms: automationResults,
+      totalPlatforms: selectedPlatforms.length,
       requestId: trackedRequest.id,
-      estimatedProcessingTime: automationResult.estimatedProcessingTime
+      estimatedProcessingTime: combinedResult.estimatedProcessingTime
     });
 
   } catch (error) {
