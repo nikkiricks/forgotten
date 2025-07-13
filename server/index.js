@@ -11,6 +11,7 @@ import InstagramAutomationService from './services/instagramAutomation.js';
 import FacebookAutomationService from './services/facebookAutomation.js';
 import YouTubeAutomationService from './services/youtubeAutomation.js';
 import RequestTracker from './services/requestTracker.js';
+import StatusTracker from './services/statusTracker.js';
 import NotificationService from './services/notificationService.js';
 import DummyPdfService from './services/dummyPdfService.js';
 import adminRoutes from './routes/admin.js';
@@ -38,6 +39,7 @@ const instagramService = new InstagramAutomationService();
 const facebookService = new FacebookAutomationService();
 const youtubeService = new YouTubeAutomationService();
 const requestTracker = new RequestTracker();
+const statusTracker = new StatusTracker();
 const notificationService = new NotificationService();
 const dummyPdfService = new DummyPdfService();
 
@@ -305,12 +307,18 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
     }
     console.log(`Multi-platform automation results:`, automationResults);
     
+    // Create privacy-first status tracking
+    const estimatedDays = selectedPlatforms.includes('youtube') || selectedPlatforms.includes('facebook') ? 21 : 
+                         selectedPlatforms.includes('linkedin') ? 10 : 14;
+    const trackingNumber = await statusTracker.createTracking(selectedPlatforms, estimatedDays);
+    
     res.json({ 
       success: true, 
       message: combinedResult.message,
       platforms: automationResults,
       totalPlatforms: selectedPlatforms.length,
       requestId: trackedRequest.id,
+      trackingNumber: trackingNumber,
       estimatedProcessingTime: combinedResult.estimatedProcessingTime
     });
 
@@ -332,6 +340,116 @@ app.get('/api/request-status/:email', async (req, res) => {
   } catch (error) {
     console.error('Error fetching request status:', error);
     res.status(500).json({ error: 'Failed to fetch request status' });
+  }
+});
+
+// Status tracking endpoints (privacy-first, no PII)
+app.get('/api/track/:identifier', async (req, res) => {
+  try {
+    const { identifier } = req.params;
+    
+    let status = null;
+    
+    // Check if it's a new tracking number format
+    if (identifier.match(/^FRG-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/)) {
+      status = await statusTracker.getStatus(identifier);
+    }
+    // Check if it's a legacy confirmationId format
+    else if (identifier.match(/^(AUTO_|MANUAL_|SUBMITTED_)/)) {
+      // First check if it's already been migrated
+      status = await statusTracker.findByLegacyConfirmationId(identifier);
+      
+      // If not found in new system, try to migrate from old system
+      if (!status) {
+        try {
+          const oldRequests = await requestTracker.getAllRequests();
+          const oldRequest = oldRequests.find(r => r.confirmationId === identifier);
+          
+          if (oldRequest) {
+            console.log(`Migrating legacy request ${identifier} to new tracking system`);
+            const newTrackingNumber = await statusTracker.migrateFromOldRequest(oldRequest);
+            status = await statusTracker.getStatus(newTrackingNumber);
+            
+            if (status) {
+              status.newTrackingNumber = newTrackingNumber;
+              status.migratedFromLegacy = true;
+            }
+          }
+        } catch (migrationError) {
+          console.error('Error during migration:', migrationError);
+        }
+      }
+    }
+    else {
+      return res.status(400).json({ 
+        error: 'Invalid identifier format',
+        message: 'Please enter a valid tracking number (FRG-XXXX-XXXX-XXXX) or confirmation ID (AUTO_XXXXXX)'
+      });
+    }
+    
+    if (!status) {
+      return res.status(404).json({ 
+        error: 'Request not found',
+        message: 'This tracking number or confirmation ID was not found or may have expired.'
+      });
+    }
+    
+    res.json(status);
+  } catch (error) {
+    console.error('Error fetching tracking status:', error);
+    res.status(500).json({ error: 'Failed to fetch tracking status' });
+  }
+});
+
+// Admin endpoint to update status
+app.patch('/api/admin/track/:trackingNumber', async (req, res) => {
+  try {
+    const { trackingNumber } = req.params;
+    const { status, message, platform } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ error: 'Status is required' });
+    }
+    
+    let updated;
+    if (platform) {
+      // Update platform-specific status
+      updated = await statusTracker.updatePlatformStatus(trackingNumber, platform, status, message);
+    } else {
+      // Update overall status
+      updated = await statusTracker.updateStatus(trackingNumber, status, message);
+    }
+    
+    if (!updated) {
+      return res.status(404).json({ error: 'Tracking number not found' });
+    }
+    
+    res.json({ success: true, message: 'Status updated successfully' });
+  } catch (error) {
+    console.error('Error updating tracking status:', error);
+    res.status(500).json({ error: 'Failed to update tracking status' });
+  }
+});
+
+// Admin endpoint to get all tracking entries
+app.get('/api/admin/track', async (req, res) => {
+  try {
+    const allTracking = await statusTracker.getAllTracking();
+    res.json(allTracking);
+  } catch (error) {
+    console.error('Error fetching all tracking data:', error);
+    res.status(500).json({ error: 'Failed to fetch tracking data' });
+  }
+});
+
+// Admin endpoint to get tracking stats
+app.get('/api/admin/track/stats', async (req, res) => {
+  try {
+    const stats = await statusTracker.getAdminStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching tracking stats:', error);
+    res.status(500).json({ error: 'Failed to fetch tracking stats' });
   }
 });
 
