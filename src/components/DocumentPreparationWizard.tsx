@@ -470,7 +470,7 @@ const DocumentPreparationWizard: React.FC<DocumentPreparationWizardProps> = () =
               
               <div className="mt-2 text-sm text-gray-600">
                 <p>✓ = Full wizard support available</p>
-                <p className="text-purple-600 font-medium">Currently supported: California, Texas, New York, Florida</p>
+                <p className="text-purple-600 font-medium">Currently supported: California, Texas, New York, Florida, Oregon</p>
               </div>
             </div>
 

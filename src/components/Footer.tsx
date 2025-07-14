@@ -1,7 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Heart, ExternalLink } from 'lucide-react';
+import LegalPages from './LegalPages';
 
 const Footer = () => {
+  const [currentPage, setCurrentPage] = useState<'privacy' | 'terms' | 'contact' | null>(null);
+
+  if (currentPage) {
+    return <LegalPages type={currentPage} onBack={() => setCurrentPage(null)} />;
+  }
+
   return (
     <footer className="bg-gray-900 text-white py-12">
       <div className="max-w-4xl mx-auto px-4">
@@ -33,15 +40,24 @@ const Footer = () => {
               © 2025 Forgotten. Made with care for those we've lost.
             </p>
             <div className="flex space-x-6 text-sm">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <button 
+                onClick={() => setCurrentPage('privacy')}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
                 Privacy Policy
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              </button>
+              <button 
+                onClick={() => setCurrentPage('terms')}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
                 Terms of Service
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              </button>
+              <button 
+                onClick={() => setCurrentPage('contact')}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
                 Contact
-              </a>
+              </button>
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import ComingSoonOverlay from './ComingSoonOverlay';
 import { 
   BarChart3, 
   Shield, 
@@ -12,6 +13,14 @@ import {
 } from 'lucide-react';
 
 const EnterpriseFeatures = () => {
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  const [selectedAction, setSelectedAction] = useState('');
+
+  const handleActionClick = (action: string) => {
+    setSelectedAction(action);
+    setShowComingSoon(true);
+  };
+
   const features = [
     {
       icon: BarChart3,
@@ -117,14 +126,35 @@ const EnterpriseFeatures = () => {
             Join leading funeral homes already using Forgotten to provide comprehensive digital legacy management
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+            <button 
+              onClick={() => handleActionClick('demo')}
+              className="bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+            >
               Schedule Demo
             </button>
-            <button className="border border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition-colors">
+            <button 
+              onClick={() => handleActionClick('trial')}
+              className="border border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition-colors"
+            >
               Start Free Trial
             </button>
           </div>
         </div>
+
+        <ComingSoonOverlay
+          isOpen={showComingSoon}
+          onClose={() => setShowComingSoon(false)}
+          title={selectedAction === 'demo' ? 'Enterprise Demo' : 'Enterprise Trial'}
+          description={
+            selectedAction === 'demo' 
+              ? "We're building our enterprise demo scheduling system. For immediate demo requests, please contact our sales team directly."
+              : "Enterprise trial management is in development. We'll offer full 30-day trials with white-label setup assistance."
+          }
+          expectedDate="Q1 2025"
+          emailSignup={true}
+          demoAvailable={true}
+          priority="high"
+        />
       </div>
     </section>
   );

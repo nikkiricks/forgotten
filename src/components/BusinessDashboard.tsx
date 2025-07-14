@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ComingSoonOverlay from './ComingSoonOverlay';
 import { 
   BarChart3, 
   Users, 
@@ -16,6 +17,13 @@ import {
 
 const BusinessDashboard = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'cases' | 'analytics' | 'settings'>('overview');
+  const [showDemoOverlay, setShowDemoOverlay] = useState(false);
+  const [demoAction, setDemoAction] = useState('');
+
+  const handleDemoAction = (action: string) => {
+    setDemoAction(action);
+    setShowDemoOverlay(true);
+  };
 
   const stats = [
     { label: 'Total Cases', value: '347', change: '+12%', icon: Users, color: 'bg-blue-500' },
@@ -73,6 +81,26 @@ const BusinessDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Demo Banner */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="bg-white bg-opacity-20 rounded-full px-3 py-1 text-sm font-medium">
+              📊 DEMO MODE
+            </div>
+            <span className="text-sm">
+              This is a preview of the Business Dashboard. Full functionality coming Q1 2025.
+            </span>
+          </div>
+          <button 
+            onClick={() => handleDemoAction('request-access')}
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Request Early Access
+          </button>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
@@ -81,7 +109,10 @@ const BusinessDashboard = () => {
               <h1 className="text-2xl font-bold text-gray-900">Business Dashboard</h1>
               <p className="text-gray-600">Heritage Funeral Home</p>
             </div>
-            <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2">
+            <button 
+              onClick={() => handleDemoAction('new-case')}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
+            >
               <Plus className="w-4 h-4" />
               <span>New Case</span>
             </button>
@@ -328,6 +359,23 @@ const BusinessDashboard = () => {
           </div>
         )}
       </div>
+
+      <ComingSoonOverlay
+        isOpen={showDemoOverlay}
+        onClose={() => setShowDemoOverlay(false)}
+        title="Business Dashboard Feature"
+        description={
+          demoAction === 'request-access' 
+            ? "Enterprise dashboard with full case management, analytics, and business tools is in development. Request early access for beta testing."
+            : demoAction === 'new-case'
+            ? "Case creation workflow with automated processing and family communication tools."
+            : "This business feature is part of our professional suite launching Q1 2025."
+        }
+        expectedDate="Q1 2025"
+        emailSignup={true}
+        demoAvailable={true}
+        priority="high"
+      />
     </div>
   );
 };

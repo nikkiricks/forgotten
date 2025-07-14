@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Check, Star, Building2, Users, Zap } from 'lucide-react';
+import ComingSoonOverlay from './ComingSoonOverlay';
 
 const PricingPlans = () => {
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState('');
+
+  const handlePlanClick = (planName: string) => {
+    setSelectedPlan(planName);
+    setShowComingSoon(true);
+  };
+
   const plans = [
     {
       name: 'Individual',
@@ -131,13 +140,36 @@ const PricingPlans = () => {
                   ))}
                 </ul>
 
-                <button className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${plan.buttonClass}`}>
+                <button 
+                  onClick={() => handlePlanClick(plan.name)}
+                  className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${plan.buttonClass}`}
+                >
                   {plan.buttonText}
                 </button>
               </div>
             );
           })}
         </div>
+
+        <ComingSoonOverlay
+          isOpen={showComingSoon}
+          onClose={() => setShowComingSoon(false)}
+          title={`${selectedPlan} Plan`}
+          description={
+            selectedPlan === 'Individual' 
+              ? "The Individual plan is always free! We're preparing the full signup flow for seamless account creation."
+              : selectedPlan === 'Enterprise'
+              ? "Enterprise sales process is in development. For immediate enterprise needs, please contact our team directly."
+              : "Professional billing and subscription management is launching soon with Stripe integration."
+          }
+          expectedDate={
+            selectedPlan === 'Individual' ? "Q1 2025" :
+            selectedPlan === 'Enterprise' ? "Q1 2025" : "Q2 2025"
+          }
+          emailSignup={true}
+          demoAvailable={selectedPlan === 'Enterprise' || selectedPlan === 'Business'}
+          priority={selectedPlan === 'Enterprise' ? 'high' : 'medium'}
+        />
 
         <div className="mt-12 text-center">
           <p className="text-gray-600 mb-4">
