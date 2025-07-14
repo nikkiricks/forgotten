@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, User, Mail, MapPin, Calendar, ExternalLink, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import PrivacyNotice from './PrivacyNotice';
 
 interface DiscoveryResult {
   searchCriteria: {
@@ -50,12 +51,25 @@ const AccountDiscovery: React.FC<AccountDiscoveryProps> = ({ onAccountsFound }) 
   const [results, setResults] = useState<DiscoveryResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [hasPrivacyConsent, setHasPrivacyConsent] = useState(false);
+  const [legalBasis, setLegalBasis] = useState<string>('');
+  const [searchId, setSearchId] = useState<string | null>(null);
+
+  const handlePrivacyConsent = (consent: boolean, basis: string) => {
+    setHasPrivacyConsent(consent);
+    setLegalBasis(basis);
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!fullName.trim()) {
       setError('Please enter the deceased person\'s full name');
+      return;
+    }
+
+    if (!hasPrivacyConsent || !legalBasis) {
+      setError('Please provide privacy consent and legal basis before proceeding');
       return;
     }
 
@@ -69,7 +83,8 @@ const AccountDiscovery: React.FC<AccountDiscoveryProps> = ({ onAccountsFound }) 
         email: email.trim() || undefined,
         username: username.trim() || undefined,
         dateOfBirth: dateOfBirth || undefined,
-        location: location.trim() || undefined
+        location: location.trim() || undefined,
+        legalBasis: legalBasis
       };
 
       const response = await fetch('http://127.0.0.1:3001/api/discover-accounts', {
@@ -88,6 +103,11 @@ const AccountDiscovery: React.FC<AccountDiscoveryProps> = ({ onAccountsFound }) 
 
       const discoveryResults = await response.json();
       setResults(discoveryResults);
+      
+      // Store the search ID for potential deletion requests
+      if (discoveryResults.searchId) {
+        setSearchId(discoveryResults.searchId);
+      }
 
       // Extract found accounts for parent component
       if (onAccountsFound) {
@@ -119,6 +139,30 @@ const AccountDiscovery: React.FC<AccountDiscoveryProps> = ({ onAccountsFound }) 
     setLocation('');
     setResults(null);
     setError(null);
+    setSearchId(null);
+    setHasPrivacyConsent(false);
+    setLegalBasis('');
+  };
+
+  const handleDeleteResults = async () => {
+    if (!searchId) return;
+
+    try {
+      const response = await fetch(`http://127.0.0.1:3001/api/discover-accounts/${searchId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setResults(null);
+        setSearchId(null);
+        alert('Your search results have been permanently deleted from our servers.');
+      } else {
+        throw new Error('Failed to delete results');
+      }
+    } catch (error) {
+      console.error('Error deleting results:', error);
+      alert('Failed to delete results. Please contact support.');
+    }
   };
 
   const getConfidenceColor = (confidence: string) => {
@@ -161,6 +205,12 @@ const AccountDiscovery: React.FC<AccountDiscoveryProps> = ({ onAccountsFound }) 
           We'll search across major platforms to identify potential accounts.
         </p>
       </div>
+
+      {/* Privacy Notice */}
+      <PrivacyNotice 
+        onConsentChange={handlePrivacyConsent}
+        consentRequired={true}
+      />
 
       <form onSubmit={handleSearch} className="space-y-4">
         {/* Required Field */}
@@ -266,7 +316,7 @@ const AccountDiscovery: React.FC<AccountDiscoveryProps> = ({ onAccountsFound }) 
         <div className="flex justify-between items-center pt-4">
           <button
             type="submit"
-            disabled={isSearching || !fullName.trim()}
+            disabled={isSearching || !fullName.trim() || !hasPrivacyConsent || !legalBasis}
             className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
           >
             {isSearching ? (
@@ -404,12 +454,29 @@ const AccountDiscovery: React.FC<AccountDiscoveryProps> = ({ onAccountsFound }) 
             ))}
           </div>
 
-          {/* Privacy Notice */}
+          {/* Data Retention & Deletion Notice */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <p className="text-sm text-amber-800">
-              <strong>Privacy Notice:</strong> This search only uses publicly available information and respects platform terms of service. 
-              No private data is accessed, and all searches are performed ethically for legitimate family purposes.
-            </p>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm text-amber-800">
+                  <strong>Data Retention Notice:</strong> These results will be automatically deleted after 7 days for your privacy. 
+                  All searches use publicly available information only and comply with GDPR/CCPA requirements.
+                </p>
+                {searchId && (
+                  <p className="text-xs text-amber-700 mt-2">
+                    Search ID: {searchId} | You can request immediate deletion at any time
+                  </p>
+                )}
+              </div>
+              {searchId && (
+                <button
+                  onClick={handleDeleteResults}
+                  className="ml-4 px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                >
+                  Delete Results Now
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
