@@ -16,6 +16,7 @@ const UploadForm = () => {
   const [facebookUrl, setFacebookUrl] = useState('');
   const [facebookRequestType, setFacebookRequestType] = useState('removal'); // For Facebook: removal or memorialization
   const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [twitterUrl, setTwitterUrl] = useState('');
   const [relationship, setRelationship] = useState('');
   const [deathCertAttached, setDeathCertAttached] = useState(false);
   const [digitalSignature, setDigitalSignature] = useState('');
@@ -114,13 +115,18 @@ const UploadForm = () => {
     if (selectedPlatforms.includes('youtube') && !youtubeUrl.trim()) {
       platformSpecificValid = false;
     }
+    
+    if (selectedPlatforms.includes('twitter') && !twitterUrl.trim()) {
+      platformSpecificValid = false;
+    }
 
     // Check if legal authorization file is required
     const needsLegalAuth = (
       (selectedPlatforms.includes('linkedin') && hasLegalAuth === 'yes') ||
       (selectedPlatforms.includes('instagram') && instagramRequestType === 'removal' && hasLegalAuth === 'yes') ||
       (selectedPlatforms.includes('facebook') && facebookRequestType === 'removal' && hasLegalAuth === 'yes') ||
-      (selectedPlatforms.includes('youtube') && hasLegalAuth === 'yes')
+      (selectedPlatforms.includes('youtube') && hasLegalAuth === 'yes') ||
+      (selectedPlatforms.includes('twitter') && hasLegalAuth === 'yes')
     );
 
     if (needsLegalAuth) {
@@ -154,6 +160,7 @@ const UploadForm = () => {
       formData.append('instagramUrl', instagramUrl);
       formData.append('facebookUrl', facebookUrl);
       formData.append('youtubeUrl', youtubeUrl);
+      formData.append('twitterUrl', twitterUrl);
       formData.append('relationship', relationship);
       formData.append('digitalSignature', digitalSignature);
       formData.append('deceasedEmail', deceasedEmail);
@@ -214,6 +221,7 @@ const UploadForm = () => {
     setInstagramUrl('');
     setFacebookUrl('');
     setYoutubeUrl('');
+    setTwitterUrl('');
     setRelationship('');
     setDeathCertAttached(false);
     setDigitalSignature('');
@@ -388,6 +396,18 @@ const UploadForm = () => {
                   />
                   <label htmlFor="platform-youtube" className="text-sm text-gray-700">
                     <strong>YouTube</strong> - Video platform account removal (Google Account)
+                  </label>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="platform-twitter"
+                    checked={selectedPlatforms.includes('twitter')}
+                    onChange={(e) => handlePlatformChange('twitter', e.target.checked)}
+                    className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="platform-twitter" className="text-sm text-gray-700">
+                    <strong>X (Twitter)</strong> - Social media account removal
                   </label>
                 </div>
               </div>
@@ -655,6 +675,39 @@ const UploadForm = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Twitter Section */}
+                {selectedPlatforms.includes('twitter') && (
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <h5 className="font-medium text-slate-900 mb-3 flex items-center">
+                      <span className="w-2 h-2 bg-slate-600 rounded-full mr-2"></span>
+                      X (Twitter) Account Information
+                    </h5>
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="twitter-url" className="block text-sm font-medium text-gray-700 mb-2">
+                          X (Twitter) Profile URL or Username *
+                        </label>
+                        <input
+                          type="text"
+                          id="twitter-url"
+                          value={twitterUrl}
+                          onChange={(e) => setTwitterUrl(e.target.value)}
+                          required={selectedPlatforms.includes('twitter')}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
+                          placeholder="https://x.com/username or @username or username"
+                        />
+                      </div>
+                      
+                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-sm text-yellow-800">
+                          <strong>Note:</strong> X (Twitter) only supports account removal (not memorialization). 
+                          The process requires death certificate and proof of your relationship to the deceased.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -730,6 +783,11 @@ const UploadForm = () => {
                   {selectedPlatforms.includes('youtube') && (
                     <div>
                       <strong>YouTube/Google:</strong> Account removal requires family proof OR legal authorization
+                    </div>
+                  )}
+                  {selectedPlatforms.includes('twitter') && (
+                    <div>
+                      <strong>X (Twitter):</strong> Account removal requires family proof OR legal authorization
                     </div>
                   )}
                 </div>

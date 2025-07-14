@@ -10,6 +10,7 @@ import LinkedInAutomationService from './services/linkedinAutomation.js';
 import InstagramAutomationService from './services/instagramAutomation.js';
 import FacebookAutomationService from './services/facebookAutomation.js';
 import YouTubeAutomationService from './services/youtubeAutomation.js';
+import TwitterAutomationService from './services/twitterAutomation.js';
 import RequestTracker from './services/requestTracker.js';
 import StatusTracker from './services/statusTracker.js';
 import NotificationService from './services/notificationService.js';
@@ -38,6 +39,7 @@ const linkedinService = new LinkedInAutomationService();
 const instagramService = new InstagramAutomationService();
 const facebookService = new FacebookAutomationService();
 const youtubeService = new YouTubeAutomationService();
+const twitterService = new TwitterAutomationService();
 const requestTracker = new RequestTracker();
 const statusTracker = new StatusTracker();
 const notificationService = new NotificationService();
@@ -112,6 +114,7 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
       instagramUrl,
       facebookUrl,
       youtubeUrl,
+      twitterUrl,
       relationship, 
       digitalSignature,
       deceasedEmail,
@@ -130,7 +133,8 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
       (selectedPlatforms.includes('linkedin') && hasLegalAuth === 'no') ||
       (selectedPlatforms.includes('instagram') && instagramRequestType === 'removal' && hasLegalAuth === 'no') ||
       (selectedPlatforms.includes('facebook') && facebookRequestType === 'removal' && hasLegalAuth === 'no') ||
-      (selectedPlatforms.includes('youtube') && hasLegalAuth === 'no')
+      (selectedPlatforms.includes('youtube') && hasLegalAuth === 'no') ||
+      (selectedPlatforms.includes('twitter') && hasLegalAuth === 'no')
     );
     
     if (needsDummyAuth) {
@@ -140,7 +144,7 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
         lastName,
         contactEmail,
         deceasedName,
-        linkedinUrl: linkedinUrl || instagramUrl || facebookUrl || youtubeUrl,
+        linkedinUrl: linkedinUrl || instagramUrl || facebookUrl || youtubeUrl || twitterUrl,
         relationship,
         dateOfDeath,
         digitalSignature,
@@ -165,6 +169,7 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
       instagramUrl,
       facebookUrl,
       youtubeUrl,
+      twitterUrl,
       relationship,
       digitalSignature,
       deceasedEmail,
@@ -267,6 +272,25 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
         };
         
         console.log('LinkedIn automation temporarily disabled - focusing on feature testing');
+      } else if (platform === 'twitter') {
+        // Twitter automation
+        try {
+          automationResults[platform] = await twitterService.submitDeceasedAccountForm(
+            platformSubmissionData,
+            certificateFile.buffer,
+            legalAuthBuffer
+          );
+        } catch (error) {
+          console.error('Twitter automation failed:', error);
+          automationResults[platform] = {
+            success: false,
+            confirmationId: `MANUAL_TW_${Date.now()}`,
+            error: error.message,
+            message: 'X/Twitter automation failed, request will be processed manually',
+            estimatedProcessingTime: '7-14 business days',
+            method: 'automation_failed'
+          };
+        }
       }
     }
     
@@ -309,7 +333,8 @@ app.post('/api/upload-certificate', uploadFiles, async (req, res) => {
     
     // Create privacy-first status tracking
     const estimatedDays = selectedPlatforms.includes('youtube') || selectedPlatforms.includes('facebook') ? 21 : 
-                         selectedPlatforms.includes('linkedin') ? 10 : 14;
+                         selectedPlatforms.includes('linkedin') ? 10 : 
+                         selectedPlatforms.includes('twitter') ? 12 : 14;
     const trackingNumber = await statusTracker.createTracking(selectedPlatforms, estimatedDays);
     
     res.json({ 
