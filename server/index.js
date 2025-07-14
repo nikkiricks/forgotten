@@ -11,6 +11,7 @@ import InstagramAutomationService from './services/instagramAutomation.js';
 import FacebookAutomationService from './services/facebookAutomation.js';
 import YouTubeAutomationService from './services/youtubeAutomation.js';
 import TwitterAutomationService from './services/twitterAutomation.js';
+import AccountDiscoveryService from './services/accountDiscoveryService.js';
 import RequestTracker from './services/requestTracker.js';
 import StatusTracker from './services/statusTracker.js';
 import NotificationService from './services/notificationService.js';
@@ -40,6 +41,7 @@ const instagramService = new InstagramAutomationService();
 const facebookService = new FacebookAutomationService();
 const youtubeService = new YouTubeAutomationService();
 const twitterService = new TwitterAutomationService();
+const accountDiscoveryService = new AccountDiscoveryService();
 const requestTracker = new RequestTracker();
 const statusTracker = new StatusTracker();
 const notificationService = new NotificationService();
@@ -475,6 +477,39 @@ app.get('/api/admin/track/stats', async (req, res) => {
   } catch (error) {
     console.error('Error fetching tracking stats:', error);
     res.status(500).json({ error: 'Failed to fetch tracking stats' });
+  }
+});
+
+// Account discovery endpoint
+app.post('/api/discover-accounts', async (req, res) => {
+  try {
+    const { fullName, email, username, dateOfBirth, location } = req.body;
+    
+    if (!fullName || !fullName.trim()) {
+      return res.status(400).json({ error: 'Full name is required for account discovery' });
+    }
+
+    console.log(`Starting account discovery for: ${fullName}`);
+    
+    const searchData = {
+      fullName: fullName.trim(),
+      email: email?.trim(),
+      username: username?.trim(),
+      dateOfBirth,
+      location: location?.trim()
+    };
+
+    const discoveryResults = await accountDiscoveryService.discoverAccounts(searchData);
+    
+    console.log(`Account discovery completed for: ${fullName}. Found accounts on ${discoveryResults.summary.totalFound} platforms.`);
+    
+    res.json(discoveryResults);
+  } catch (error) {
+    console.error('Error during account discovery:', error);
+    res.status(500).json({ 
+      error: 'Account discovery failed',
+      message: error.message 
+    });
   }
 });
 
