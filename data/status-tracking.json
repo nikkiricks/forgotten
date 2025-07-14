@@ -1,0 +1,25 @@
+[
+  {
+    "trackingNumber": "FRG-6E17-FC7C-A6F4",
+    "status": "submitted",
+    "platforms": [
+      {
+        "name": "linkedin",
+        "status": "submitted",
+        "lastUpdated": "2025-07-11T15:42:49.499Z"
+      }
+    ],
+    "submittedAt": "2025-07-11T15:42:49.499Z",
+    "lastUpdated": "2025-07-13T15:42:49.499Z",
+    "estimatedCompletionDate": "2025-07-27T23:41:11.807Z",
+    "statusHistory": [
+      {
+        "status": "submitted",
+        "timestamp": "2025-07-13T15:42:49.499Z",
+        "message": "Request migrated from legacy system"
+      }
+    ],
+    "legacyConfirmationId": "AUTO_1752277769499",
+    "expiresAt": "2025-10-11T23:41:11.807Z"
+  }
+]
