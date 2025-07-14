@@ -1,0 +1,6 @@
+# Privacy-sensitive data - DO NOT commit to version control
+discovery-results/
+privacy-logs/
+
+# Keep directory structure
+!.gitignore

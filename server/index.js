@@ -12,6 +12,7 @@ import FacebookAutomationService from './services/facebookAutomation.js';
 import YouTubeAutomationService from './services/youtubeAutomation.js';
 import TwitterAutomationService from './services/twitterAutomation.js';
 import AccountDiscoveryService from './services/accountDiscoveryService.js';
+import DataRetentionService from './services/dataRetentionService.js';
 import RequestTracker from './services/requestTracker.js';
 import StatusTracker from './services/statusTracker.js';
 import NotificationService from './services/notificationService.js';
@@ -42,6 +43,7 @@ const facebookService = new FacebookAutomationService();
 const youtubeService = new YouTubeAutomationService();
 const twitterService = new TwitterAutomationService();
 const accountDiscoveryService = new AccountDiscoveryService();
+const dataRetentionService = new DataRetentionService();
 const requestTracker = new RequestTracker();
 const statusTracker = new StatusTracker();
 const notificationService = new NotificationService();
@@ -480,16 +482,20 @@ app.get('/api/admin/track/stats', async (req, res) => {
   }
 });
 
-// Account discovery endpoint
+// Account discovery endpoint with privacy compliance
 app.post('/api/discover-accounts', async (req, res) => {
   try {
-    const { fullName, email, username, dateOfBirth, location } = req.body;
+    const { fullName, email, username, dateOfBirth, location, legalBasis } = req.body;
     
     if (!fullName || !fullName.trim()) {
       return res.status(400).json({ error: 'Full name is required for account discovery' });
     }
 
-    console.log(`Starting account discovery for: ${fullName}`);
+    if (!legalBasis) {
+      return res.status(400).json({ error: 'Legal basis is required for GDPR/CCPA compliance' });
+    }
+
+    console.log(`Starting GDPR-compliant account discovery for: ${fullName.substring(0, 3)}*** (Legal basis: ${legalBasis})`);
     
     const searchData = {
       fullName: fullName.trim(),
@@ -501,13 +507,86 @@ app.post('/api/discover-accounts', async (req, res) => {
 
     const discoveryResults = await accountDiscoveryService.discoverAccounts(searchData);
     
-    console.log(`Account discovery completed for: ${fullName}. Found accounts on ${discoveryResults.summary.totalFound} platforms.`);
+    // Store results with automatic 7-day deletion
+    const searchId = await dataRetentionService.storeDiscoveryResults(
+      searchData, 
+      discoveryResults, 
+      legalBasis
+    );
+
+    console.log(`Account discovery completed. Found accounts on ${discoveryResults.summary.totalFound} platforms. Search ID: ${searchId}`);
     
-    res.json(discoveryResults);
+    // Add search ID to response for deletion requests
+    res.json({
+      ...discoveryResults,
+      searchId,
+      dataRetention: {
+        autoDeleteAfterDays: 7,
+        searchId,
+        canRequestDeletion: true
+      }
+    });
   } catch (error) {
     console.error('Error during account discovery:', error);
     res.status(500).json({ 
       error: 'Account discovery failed',
+      message: error.message 
+    });
+  }
+});
+
+// Data deletion endpoint
+app.delete('/api/discover-accounts/:searchId', async (req, res) => {
+  try {
+    const { searchId } = req.params;
+    
+    if (!searchId) {
+      return res.status(400).json({ error: 'Search ID is required' });
+    }
+
+    const deleted = await dataRetentionService.deleteDiscoveryResults(searchId, 'USER_REQUEST');
+    
+    if (deleted) {
+      console.log(`User-requested deletion completed for search ID: ${searchId}`);
+      res.json({ 
+        success: true, 
+        message: 'Discovery results have been permanently deleted',
+        searchId
+      });
+    } else {
+      res.status(404).json({ 
+        error: 'Search results not found or already deleted',
+        searchId
+      });
+    }
+  } catch (error) {
+    console.error('Error deleting discovery results:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete discovery results',
+      message: error.message 
+    });
+  }
+});
+
+// Data retrieval endpoint (for users to access their stored results)
+app.get('/api/discover-accounts/:searchId', async (req, res) => {
+  try {
+    const { searchId } = req.params;
+    
+    const results = await dataRetentionService.getDiscoveryResults(searchId);
+    
+    if (results) {
+      res.json(results);
+    } else {
+      res.status(404).json({ 
+        error: 'Search results not found or have expired',
+        message: 'Results are automatically deleted after 7 days for privacy protection'
+      });
+    }
+  } catch (error) {
+    console.error('Error retrieving discovery results:', error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve discovery results',
       message: error.message 
     });
   }
