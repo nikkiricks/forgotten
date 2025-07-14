@@ -238,11 +238,26 @@ const UploadForm = () => {
             <h3 className="font-semibold text-blue-900 mb-2">Confirmation Details</h3>
             <div className="text-sm text-blue-800 space-y-1">
               <p><strong>Request ID:</strong> <code className="bg-blue-100 px-2 py-1 rounded">{submissionResult?.requestId}</code></p>
+              {submissionResult?.trackingNumber && (
+                <p><strong>Tracking Number:</strong> <code className="bg-green-100 px-2 py-1 rounded text-green-800 font-mono">{submissionResult.trackingNumber}</code></p>
+              )}
               <p><strong>Processing Time:</strong> {submissionResult?.estimatedProcessingTime}</p>
               <p><strong>Platforms:</strong> {submissionResult?.totalPlatforms} platform{submissionResult?.totalPlatforms > 1 ? 's' : ''}</p>
               <p><strong>Contact Email:</strong> {contactEmail}</p>
             </div>
           </div>
+
+          {submissionResult?.trackingNumber && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <h3 className="font-semibold text-green-900 mb-2">📋 Track Your Request</h3>
+              <p className="text-sm text-green-800 mb-3">
+                Save your tracking number: <strong className="font-mono">{submissionResult.trackingNumber}</strong>
+              </p>
+              <p className="text-xs text-green-700">
+                You can check your request status anytime using this tracking number. No login required!
+              </p>
+            </div>
+          )}
 
           {/* Platform-specific confirmations */}
           {submissionResult?.platforms && (
