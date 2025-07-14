@@ -1,3 +1,5 @@
+<img width="897" height="901" alt="image" src="https://github.com/user-attachments/assets/71519358-c342-4837-a007-022bba5090b7" />
+
 # Forgotten - Digital Legacy Management
 
 A respectful tool to help families remove deceased loved ones' online accounts across multiple platforms including LinkedIn and Instagram.
