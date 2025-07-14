@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, Mail, CheckCircle, X, ExternalLink } from 'lucide-react';
+import { saveEmailSignup } from '../utils/emailCollection';
 
 interface ComingSoonOverlayProps {
   isOpen: boolean;
@@ -29,14 +30,16 @@ const ComingSoonOverlay: React.FC<ComingSoonOverlayProps> = ({
 
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would connect to an email service
-    console.log('Email signup:', email);
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setEmail('');
-      onClose();
-    }, 2000);
+    if (email) {
+      // Save email to local storage for demo
+      saveEmailSignup(email, `coming-soon-${title.toLowerCase().replace(/\s+/g, '-')}`);
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        setEmail('');
+        onClose();
+      }, 2000);
+    }
   };
 
   const priorityColors = {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Globe, CheckCircle } from 'lucide-react';
+import { saveEmailSignup } from '../utils/emailCollection';
 
 const ComingSoon = () => {
   const [email, setEmail] = useState('');
@@ -8,8 +9,8 @@ const ComingSoon = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      // In a real app, this would connect to an email service
-      console.log('Platform notification signup:', email);
+      // Save email to local storage for demo
+      saveEmailSignup(email, 'platform-notifications');
       setSubmitted(true);
       setTimeout(() => {
         setSubmitted(false);
