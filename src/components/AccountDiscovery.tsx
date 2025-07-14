@@ -72,12 +72,13 @@ const AccountDiscovery: React.FC<AccountDiscoveryProps> = ({ onAccountsFound }) 
         location: location.trim() || undefined
       };
 
-      const response = await fetch('http://127.0.0.1:8000/api/discover-accounts', {
+      const response = await fetch('http://127.0.0.1:3001/api/discover-accounts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(searchData),
+        signal: AbortSignal.timeout(120000), // 2 minute timeout for account discovery
       });
 
       if (!response.ok) {
