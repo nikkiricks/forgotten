@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Globe, CheckCircle } from 'lucide-react';
-import { saveEmailSignup } from '../utils/emailCollection';
+import { submitEmailSignup } from '../utils/emailCollection';
 
 const ComingSoon = () => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      // Save email to local storage for demo
-      saveEmailSignup(email, 'platform-notifications');
+      // Submit email (production-ready with localStorage fallback)
+      await submitEmailSignup(email, 'platform-notifications');
       setSubmitted(true);
       setTimeout(() => {
         setSubmitted(false);

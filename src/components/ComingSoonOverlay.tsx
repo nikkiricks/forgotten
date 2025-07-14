@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, Mail, CheckCircle, X, ExternalLink } from 'lucide-react';
-import { saveEmailSignup } from '../utils/emailCollection';
+import { submitEmailSignup } from '../utils/emailCollection';
 
 interface ComingSoonOverlayProps {
   isOpen: boolean;
@@ -28,11 +28,11 @@ const ComingSoonOverlay: React.FC<ComingSoonOverlayProps> = ({
 
   if (!isOpen) return null;
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      // Save email to local storage for demo
-      saveEmailSignup(email, `coming-soon-${title.toLowerCase().replace(/\s+/g, '-')}`);
+      // Submit email (production-ready with localStorage fallback)
+      await submitEmailSignup(email, `coming-soon-${title.toLowerCase().replace(/\s+/g, '-')}`);
       setSubmitted(true);
       setTimeout(() => {
         setSubmitted(false);

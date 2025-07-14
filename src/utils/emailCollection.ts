@@ -7,7 +7,40 @@ export interface EmailSignup {
 
 const STORAGE_KEY = 'forgotten-email-signups';
 
-export const saveEmailSignup = (email: string, source: string = 'unknown'): void => {
+// Production-ready email submission with fallback to localStorage
+export const submitEmailSignup = async (email: string, source: string = 'unknown'): Promise<boolean> => {
+  // Try Netlify Forms first (production)
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    try {
+      const formData = new FormData();
+      formData.append('form-name', 'email-signups');
+      formData.append('email', email);
+      formData.append('source', source);
+      formData.append('timestamp', new Date().toISOString());
+
+      const response = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(formData as any).toString()
+      });
+
+      if (response.ok) {
+        console.log('✅ Email submitted to Netlify Forms');
+        // Still save locally as backup
+        saveEmailSignupLocal(email, source);
+        return true;
+      }
+    } catch (error) {
+      console.warn('Netlify Forms failed, falling back to localStorage:', error);
+    }
+  }
+
+  // Fallback to localStorage (development or if production fails)
+  saveEmailSignupLocal(email, source);
+  return true;
+};
+
+export const saveEmailSignupLocal = (email: string, source: string = 'unknown'): void => {
   const existingSignups = getEmailSignups();
   
   // Check if email already exists
@@ -28,7 +61,12 @@ export const saveEmailSignup = (email: string, source: string = 'unknown'): void
   // Also log for demo purposes
   console.log(`📧 Email collected: ${email} (${source})`);
   console.log(`📊 Total signups: ${updatedSignups.length}`);
+  console.log('📋 All stored emails:', updatedSignups);
+  console.log('💾 LocalStorage key:', STORAGE_KEY);
 };
+
+// Legacy function for backward compatibility
+export const saveEmailSignup = saveEmailSignupLocal;
 
 export const getEmailSignups = (): EmailSignup[] => {
   try {

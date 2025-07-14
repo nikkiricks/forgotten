@@ -9,6 +9,7 @@ import ComingSoon from './components/ComingSoon';
 import Footer from './components/Footer';
 import DocumentPreparationWizard from './components/DocumentPreparationWizard';
 import EnterprisePage from './components/EnterprisePage';
+import EmailDebug from './components/EmailDebug';
 
 type ViewMode = 'main' | 'wizard' | 'enterprise';
 
@@ -50,6 +51,7 @@ function App() {
         <ComingSoon />
       </main>
       <Footer />
+      {process.env.NODE_ENV === 'development' && <EmailDebug />}
     </div>
   );
 }
