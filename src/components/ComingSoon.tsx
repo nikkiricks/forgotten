@@ -1,7 +1,24 @@
-import React from 'react';
-import { Globe } from 'lucide-react';
+import React, { useState } from 'react';
+import { Globe, CheckCircle } from 'lucide-react';
+import { submitEmailSignup } from '../utils/emailCollection';
 
 const ComingSoon = () => {
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) {
+      // Submit email (production-ready with localStorage fallback)
+      await submitEmailSignup(email, 'platform-notifications');
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        setEmail('');
+      }, 3000);
+    }
+  };
+
   const platforms = [
     { name: 'TikTok', icon: Globe, color: 'text-purple-600' },
     { name: 'Snapchat', icon: Globe, color: 'text-yellow-500' },
@@ -35,19 +52,34 @@ const ComingSoon = () => {
         </div>
 
         <div className="text-center mt-12">
-          <p className="text-gray-600 mb-4">
-            Want to be notified when we add more platforms?
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
-            />
-            <button className="bg-purple-400 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-500 transition-colors">
-              Notify Me
-            </button>
-          </div>
+          {!submitted ? (
+            <>
+              <p className="text-gray-600 mb-4">
+                Want to be notified when we add more platforms?
+              </p>
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+                />
+                <button 
+                  type="submit"
+                  className="bg-purple-400 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-500 transition-colors"
+                >
+                  Notify Me
+                </button>
+              </form>
+            </>
+          ) : (
+            <div className="flex items-center justify-center space-x-2 text-green-600">
+              <CheckCircle className="w-6 h-6" />
+              <p className="font-medium">Thanks! We'll notify you when new platforms are added.</p>
+            </div>
+          )}
         </div>
       </div>
     </section>
